@@ -1,0 +1,182 @@
+[
+  {
+    "strategy": "fixed",
+    "mode": "dense",
+    "id": "q07",
+    "question": "What is the largest page size for list calls?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "dense",
+    "id": "q12",
+    "question": "Which events can I subscribe to?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "dense",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "bm25",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "bm25",
+    "id": "q25",
+    "question": "How many users can I add on the Free plan?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "bm25",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "bm25",
+    "id": "q36",
+    "question": "How should I pass the API key to the agent?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "hybrid",
+    "id": "q10",
+    "question": "How many times does Nimbus retry a failed webhook?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "hybrid",
+    "id": "q12",
+    "question": "Which events can I subscribe to?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "hybrid",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "hybrid",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "hybrid_rerank",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "fixed",
+    "mode": "hybrid_rerank",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  },
+  {
+    "strategy": "recursive",
+    "mode": "dense",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "recursive",
+    "mode": "bm25",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "recursive",
+    "mode": "bm25",
+    "id": "q25",
+    "question": "How many users can I add on the Free plan?"
+  },
+  {
+    "strategy": "recursive",
+    "mode": "bm25",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  },
+  {
+    "strategy": "recursive",
+    "mode": "hybrid",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "recursive",
+    "mode": "hybrid",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  },
+  {
+    "strategy": "recursive",
+    "mode": "hybrid_rerank",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "recursive",
+    "mode": "hybrid_rerank",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "dense",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "bm25",
+    "id": "q11",
+    "question": "How long does my endpoint have to respond to a webhook?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "bm25",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "bm25",
+    "id": "q25",
+    "question": "How many users can I add on the Free plan?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "bm25",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "hybrid",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "hybrid",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "hybrid_rerank",
+    "id": "q23",
+    "question": "Does Nimbus support single sign-on?"
+  },
+  {
+    "strategy": "heading",
+    "mode": "hybrid_rerank",
+    "id": "q26",
+    "question": "When does a pending invitation stop working?"
+  }
+]
