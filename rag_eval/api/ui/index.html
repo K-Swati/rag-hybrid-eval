@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frostfield Assistant</title>
+<style>
+:root {
+  --bg: #f7f7f8; --surface: #fff; --surface-2: #fafafa; --hover: #f2f2f4;
+  --border: #e6e6ea; --border-strong: #d4d4da;
+  --text: #16161a; --text-2: #3a3a42; --muted: #6b6b76; --faint: #9a9aa4;
+  --accent: #be185d; --accent-hover: #9d174d; --accent-soft: #fdf2f8; --accent-text: #9d174d; --on-accent: #fff;
+  --sql: #1d4ed8; --sql-soft: #eff6ff; --docs: #047857; --docs-soft: #ecfdf5;
+  --ok: #047857; --ok-soft: #ecfdf5; --bad: #b91c1c; --bad-soft: #fef2f2; --warn: #92400e; --warn-soft: #fffbeb;
+  --mark: #fef3c7;
+  --shadow: 0 1px 2px rgba(20, 20, 30, .05);
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111114; --surface: #1a1a1f; --surface-2: #16161a; --hover: #24242b;
+    --border: #2c2c34; --border-strong: #3c3c46;
+    --text: #f2f2f4; --text-2: #d0d0d6; --muted: #9a9aa4; --faint: #6b6b76;
+    --accent: #f472b6; --accent-hover: #f9a8d4; --accent-soft: #3b1529; --accent-text: #f9a8d4; --on-accent: #1a1a1f;
+    --sql: #93c5fd; --sql-soft: #172554; --docs: #6ee7b7; --docs-soft: #0f2e25;
+    --ok: #6ee7b7; --ok-soft: #0f2e25; --bad: #fca5a5; --bad-soft: #3b1717; --warn: #fcd34d; --warn-soft: #3a2c0c;
+    --mark: #4a3b10; --shadow: none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111114; --surface: #1a1a1f; --surface-2: #16161a; --hover: #24242b;
+  --border: #2c2c34; --border-strong: #3c3c46;
+  --text: #f2f2f4; --text-2: #d0d0d6; --muted: #9a9aa4; --faint: #6b6b76;
+  --accent: #f472b6; --accent-hover: #f9a8d4; --accent-soft: #3b1529; --accent-text: #f9a8d4; --on-accent: #1a1a1f;
+  --sql: #93c5fd; --sql-soft: #172554; --docs: #6ee7b7; --docs-soft: #0f2e25;
+  --ok: #6ee7b7; --ok-soft: #0f2e25; --bad: #fca5a5; --bad-soft: #3b1717; --warn: #fcd34d; --warn-soft: #3a2c0c;
+  --mark: #4a3b10; --shadow: none; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4, p { margin: 0; }
+[hidden] { display: none !important; }
+a { color: var(--accent-text); }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+
+button { font: inherit; font-size: 14px; font-weight: 500; color: var(--text-2); background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: 8px; padding: 7px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: var(--shadow); }
+button:hover { background: var(--hover); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input, select { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; padding: 7px 10px; }
+select { font-size: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden; background: var(--surface); flex-wrap: wrap; }
+.seg button { border: 0; border-radius: 0; box-shadow: none; background: transparent; padding: 6px 12px; border-right: 1px solid var(--border); font-size: 13.5px; }
+.seg button:last-child { border-right: 0; }
+.seg button.on { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+
+/* shell */
+header.top { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
+.top-inner { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 24px; height: 58px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; white-space: nowrap; }
+.brand .logo { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
+.brand .logo svg { width: 18px; height: 18px; }
+.brand small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); line-height: 1.1; }
+nav.tabs { display: flex; gap: 4px; height: 100%; }
+nav.tabs a { display: flex; align-items: center; padding: 0 14px; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 14.5px; border-bottom: 2px solid transparent; }
+nav.tabs a:hover { color: var(--text); }
+nav.tabs a.on { color: var(--text); border-bottom-color: var(--accent); }
+.status { margin-left: auto; display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); display: inline-block; }
+.dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); }
+main { max-width: 1120px; margin: 0 auto; padding: 28px 16px 64px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+.pad { padding: 20px; }
+.stack > * + * { margin-top: 16px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.grow { flex: 1; }
+.lede { color: var(--text-2); max-width: 760px; }
+h1.page { font-size: 24px; letter-spacing: -.01em; margin-bottom: 6px; }
+h2.sec { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.error { background: var(--bad-soft); color: var(--bad); border-radius: 8px; padding: 10px 12px; font-size: 14px; white-space: pre-wrap; }
+.note { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 9px 12px; font-size: 13.5px; }
+details > summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--text-2); list-style: none; display: flex; align-items: center; gap: 6px; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "›"; display: inline-block; transition: transform .15s; font-size: 18px; line-height: 1; color: var(--muted); }
+details[open] > summary::before { transform: rotate(90deg); }
+
+/* ask */
+.ask-box { padding: 18px; }
+.ask-box form { display: flex; gap: 10px; }
+.ask-box input[type=text] { flex: 1; font-size: 16px; padding: 11px 14px; border-radius: 10px; min-width: 0; }
+.ask-box button.primary { padding: 0 22px; border-radius: 10px; font-size: 15px; }
+.options { margin-top: 12px; }
+.options .row { margin-top: 12px; gap: 18px; align-items: flex-end; }
+.opt { display: flex; flex-direction: column; gap: 5px; }
+.examples { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ex-group { padding: 16px 18px; }
+.ex-group h3 { font-size: 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ex-group p { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.chip { display: block; width: 100%; text-align: left; white-space: normal; background: var(--surface-2); border: 1px solid var(--border); box-shadow: none;
+  border-radius: 8px; padding: 8px 11px; font-size: 13.5px; font-weight: 400; color: var(--text-2); margin-top: 6px; }
+.chip:hover { border-color: var(--border-strong); background: var(--hover); }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.badge.sql { background: var(--sql-soft); color: var(--sql); }
+.badge.docs { background: var(--docs-soft); color: var(--docs); }
+.badge.ok { background: var(--ok-soft); color: var(--ok); }
+.badge.bad { background: var(--bad-soft); color: var(--bad); }
+.badge.plain { background: var(--hover); color: var(--text-2); font-weight: 500; }
+.badge svg { width: 14px; height: 14px; }
+.answer { font-size: 18px; line-height: 1.55; font-weight: 500; }
+.reason { font-size: 13.5px; color: var(--muted); }
+.flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.flow .step { background: var(--hover); border-radius: 6px; padding: 2px 8px; color: var(--text-2); }
+.flow .arrow { color: var(--faint); }
+pre.sql { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: 10px 0 0;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.6; color: var(--text-2); }
+pre.sql .kw { color: var(--sql); font-weight: 600; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table.data { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+table.data th { text-align: left; font-weight: 600; font-size: 12px; color: var(--muted); background: var(--surface-2); padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.data td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.data tr.click { cursor: pointer; }
+table.data tr.click:hover td { background: var(--hover); }
+.source { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.source + .source { margin-top: 10px; }
+.source .head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 13px; margin-bottom: 4px; }
+.source .head b { font-size: 14px; }
+.source .text { font-size: 13.5px; color: var(--text-2); white-space: pre-wrap; }
+mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
+mark.key { background: var(--ok-soft); color: var(--ok); font-weight: 600; }
+.trace { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.trace .col { border: 1px solid var(--border); border-radius: 10px; padding: 10px; min-width: 0; }
+.trace .col h4 { font-size: 12.5px; margin-bottom: 2px; }
+.trace .col p { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.trace .item { font-size: 12.5px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trace .item.used { outline: 1.5px solid var(--accent); }
+.timings { font-size: 12px; color: var(--faint); }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* data */
+.data-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: start; }
+.side { position: sticky; top: 78px; padding: 10px; max-height: calc(100vh - 100px); overflow: auto; }
+.side .group { font-size: 11.5px; font-weight: 700; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; padding: 12px 10px 4px; }
+.side a { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 7px; text-decoration: none; color: var(--text-2); font-size: 13.5px; }
+.side a:hover { background: var(--hover); }
+.side a.on { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.side a span:last-child { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.diagram { display: grid; grid-template-columns: 1fr auto 1.3fr auto 1fr; gap: 10px; align-items: center; }
+.diagram .box { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); font-size: 13.5px; color: var(--text-2); }
+.diagram .box b { display: block; font-size: 14px; margin-bottom: 4px; color: var(--text); }
+.diagram .arrow { color: var(--faint); font-size: 20px; text-align: center; }
+.diagram .split { display: flex; flex-direction: column; gap: 10px; }
+.tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.tcard { text-align: left; display: block; white-space: normal; padding: 12px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); box-shadow: none; font-weight: 400; }
+.tcard:hover { border-color: var(--border-strong); background: var(--surface); }
+.tcard b { font-family: var(--mono); font-size: 13px; color: var(--text); }
+.tcard b.title { font-family: var(--font); font-size: 14px; }
+.tcard .rows { float: right; font-size: 12px; color: var(--faint); }
+.tcard p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.md h1 { font-size: 22px; margin-bottom: 12px; }
+.md h2 { font-size: 16px; margin: 20px 0 6px; padding-top: 14px; border-top: 1px solid var(--border); }
+.md h1 + p + h2, .md h1 + h2 { border-top: 0; padding-top: 0; }
+.md p { margin: 6px 0; color: var(--text-2); }
+.md ul { margin: 6px 0; padding-left: 20px; color: var(--text-2); }
+.pill-q { display: inline-block; font-size: 13px; background: var(--hover); border-radius: 999px; padding: 4px 11px; margin: 6px 6px 0 0; border: 0; box-shadow: none; font-weight: 400; white-space: normal; text-align: left; }
+.chunk { border: 1px dashed var(--border-strong); border-radius: 8px; padding: 10px 12px; font-size: 13px; white-space: pre-wrap; color: var(--text-2); }
+.chunk + .chunk { margin-top: 8px; }
+.chunk .meta { font-size: 11.5px; color: var(--faint); margin-bottom: 4px; font-family: var(--mono); }
+.pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 10px; }
+
+/* benchmark */
+.scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.score { padding: 18px 20px; }
+.score .big { font-size: 34px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.score .big small { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 6px; letter-spacing: 0; }
+.score p { font-size: 13.5px; color: var(--muted); }
+.bar { height: 6px; background: var(--hover); border-radius: 99px; overflow: hidden; margin-top: 12px; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.yes { color: var(--ok); font-weight: 600; } .no { color: var(--bad); font-weight: 600; }
+.progress { height: 6px; background: var(--hover); border-radius: 99px; overflow: hidden; width: 160px; }
+.progress i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+
+@media (max-width: 860px) {
+  .top-inner { gap: 12px; height: auto; flex-wrap: wrap; padding-top: 10px; }
+  nav.tabs { order: 3; width: 100%; height: 42px; }
+  .status { display: none; }
+  .examples, .scores { grid-template-columns: 1fr; }
+  .data-layout { grid-template-columns: 1fr; }
+  .side { position: static; max-height: 260px; }
+  .trace { grid-template-columns: 1fr 1fr; }
+  .diagram { grid-template-columns: 1fr; }
+  .diagram .arrow { transform: rotate(90deg); }
+  .ask-box form { flex-direction: column; }
+  .ask-box button.primary { padding: 10px; justify-content: center; }
+  main { padding-top: 20px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11a5 5 0 0 1 10 0"/><path d="M6 11h12l-6 11z"/></svg></div>
+      <div>Frostfield Assistant<small>Ask anything about the company's data</small></div>
+    </div>
+    <nav class="tabs" aria-label="Views">
+      <a href="#ask" data-view="ask">Ask</a>
+      <a href="#data" data-view="data">Data</a>
+      <a href="#benchmark" data-view="benchmark">Benchmark</a>
+    </nav>
+    <div class="status" id="status"><span class="dot"></span> Connecting…</div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ ASK ============ -->
+  <section id="view-ask" class="stack" hidden>
+    <div>
+      <h1 class="page">Ask a question</h1>
+      <p class="lede">Questions about numbers (sales, revenue, units, counts) are answered with a SQL query on Postgres. Questions about policies, products, suppliers and incidents are answered by searching the company's documents. The assistant picks the path and shows its working.</p>
+    </div>
+    <div class="card ask-box">
+      <form id="ask-form">
+        <input type="text" id="q" placeholder="e.g. Which region had the highest revenue in 2024?" autocomplete="off" aria-label="Question">
+        <button class="primary" type="submit" id="ask-btn">Ask</button>
+      </form>
+      <details class="options">
+        <summary>Options</summary>
+        <div class="row">
+          <div class="opt"><span class="label">Answer from</span>
+            <div class="seg" id="route-seg"><button type="button" data-v="auto" class="on">Auto</button><button type="button" data-v="sql">SQL</button><button type="button" data-v="docs">Documents</button></div></div>
+          <div class="opt"><span class="label">Search mode</span><select id="mode"></select></div>
+          <div class="opt"><span class="label">Chunking</span><select id="strategy"></select></div>
+          <div class="opt"><span class="label">Results</span><select id="k"><option>3</option><option>5</option><option>8</option></select></div>
+          <label class="row" style="gap:6px;font-size:14px;padding-bottom:8px"><input type="checkbox" id="trace"> Show search steps</label>
+        </div>
+        <p class="small muted" style="margin-top:10px">Search mode, chunking and results only affect document questions. "Hybrid + rerank" combines meaning-based and keyword search, then re-orders the results.</p>
+      </details>
+    </div>
+    <div id="result"></div>
+    <div class="examples">
+      <div class="card ex-group">
+        <h3><span class="badge sql">SQL</span> Numbers from the database</h3>
+        <p>Totals, rankings, trends and counts, computed live from the tables.</p>
+        <div id="ex-sql"></div>
+      </div>
+      <div class="card ex-group">
+        <h3><span class="badge docs">Documents</span> Policies and records</h3>
+        <p>Rules, procedures, product details, suppliers and incident reports.</p>
+        <div id="ex-docs"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DATA ============ -->
+  <section id="view-data" hidden>
+    <div class="data-layout">
+      <nav class="card side" id="data-nav" aria-label="Tables and documents"></nav>
+      <div id="data-main"></div>
+    </div>
+  </section>
+
+  <!-- ============ BENCHMARK ============ -->
+  <section id="view-benchmark" class="stack" hidden>
+    <div class="row" style="align-items:flex-start">
+      <div class="grow">
+        <h1 class="page">How well does it work?</h1>
+        <p class="lede">The assistant is tested on <span id="bq-count">48</span> questions with known answers. Each number question has a hand-written reference query. Each document question has the exact phrase the answer must contain.</p>
+      </div>
+      <div class="row"><span class="row small muted" id="run-progress"></span><button id="run-btn">Run benchmark</button></div>
+    </div>
+    <div id="bench"></div>
+  </section>
+</main>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const state = { meta: null, route: "auto", tables: null, docs: null, docView: "read", benchFilter: "all" };
+const MODE_NAMES = { dense: "Meaning (dense)", bm25: "Keywords (BM25)", hybrid: "Hybrid", hybrid_rerank: "Hybrid + rerank" };
+const STAGES = [["dense", "Meaning search", "Closest in meaning (embeddings)"], ["bm25", "Keyword search", "Matching words (BM25)"],
+                ["fused", "Combined", "Both lists merged (RRF)"], ["reranked", "Reranked", "Re-ordered by word overlap"]];
+const ICON_DB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>';
+const ICON_DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>';
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(typeof body.detail === "string" ? body.detail : r.statusText), { status: r.status });
+  return body;
+}
+const post = (path, data) => api(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+
+/* ---------- formatting ---------- */
+const MONEY = /(inr|revenue|discount|margin|price|cost|mrp)/i;
+const indian = (n, digits = 0) => Number(n).toLocaleString("en-IN", { maximumFractionDigits: digits, minimumFractionDigits: digits });
+function fmtCell(v, col) {
+  if (v === null || v === undefined) return '<span class="muted">—</span>';
+  if (typeof v === "number") {
+    if (/^(year|sale_id)$/i.test(col)) return String(v);
+    if (MONEY.test(col) && !/pct/i.test(col)) return "₹" + indian(v, Number.isInteger(v) ? 0 : 2);
+    if (/pct|share/i.test(col)) return v.toFixed(1) + "%";
+    return indian(v, Number.isInteger(v) ? 0 : 2);
+  }
+  if (typeof v === "boolean") return v ? "yes" : "no";
+  if (/^\d{4}-\d{2}-01$/.test(v) && /month/i.test(col))
+    return new Date(v + "T00:00:00").toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+  return esc(/^(channel|category)$/.test(col) ? v.replace(/_/g, " ") : v);
+}
+function dataTable(columns, rows) {
+  const numeric = columns.map((c, i) => rows.some(r => typeof r[i] === "number"));
+  return `<div class="table-wrap"><table class="data"><thead><tr>${columns.map((c, i) => `<th class="${numeric[i] ? "n" : ""}">${esc(c.replace(/_/g, " "))}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(r => `<tr>${r.map((v, i) => `<td class="${numeric[i] ? "n" : ""}">${fmtCell(v, columns[i])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+const highlightSql = sql => esc(sql).replace(/\b(SELECT|FROM|JOIN|ON|WHERE|AND|OR|GROUP BY|ORDER BY|LIMIT|AS|SUM|COUNT|ROUND|EXTRACT|IN|DESC|ASC|WITH|CASE|WHEN|THEN|ELSE|END|BETWEEN|USING|FILTER|DATE_TRUNC|TO_CHAR)\b/g, '<span class="kw">$1</span>');
+const STOP = new Set("a an and are as at be by do does for from how in is it my of on or the to what when which who will with can you your should our we did was were has have this that".split(" "));
+function highlight(text, question, key) {
+  let html = esc(text);
+  const terms = [...new Set((question.toLowerCase().match(/[a-z0-9][a-z0-9]+/g) || []).filter(t => !STOP.has(t) && t.length > 2))];
+  if (terms.length) html = html.replace(new RegExp(`\\b(${terms.join("|")})\\b`, "gi"), "<mark>$1</mark>");
+  if (key) {
+    // mark the gold phrase on the plain text, ignoring the term marks inside it
+    const plain = html.replace(/<\/?mark>/g, "");
+    const k = esc(key).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(k, "i").test(plain)) html = plain.replace(new RegExp(k, "i"), m => `<mark class="key">${m}</mark>`);
+  }
+  return html;
+}
+function md(text) {
+  const out = []; let list = false;
+  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`(.+?)`/g, "<code>$1</code>");
+  for (const raw of text.split("\n")) {
+    const line = raw.trimEnd();
+    if (/^- /.test(line)) { if (!list) { out.push("<ul>"); list = true; } out.push(`<li>${inline(line.slice(2))}</li>`); continue; }
+    if (list) { out.push("</ul>"); list = false; }
+    if (/^# /.test(line)) out.push(`<h1>${inline(line.slice(2))}</h1>`);
+    else if (/^## /.test(line)) out.push(`<h2>${inline(line.slice(3))}</h2>`);
+    else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+  }
+  if (list) out.push("</ul>");
+  return out.join("");
+}
+const pct = x => x === null || x === undefined ? "n/a" : Math.round(x * 100) + "%";
+const spinner = () => `<div class="card pad row"><span class="spinner"></span><span class="muted">Loading…</span></div>`;
+
+/* ---------- views ---------- */
+function show() {
+  const [view, ...rest] = (location.hash.slice(1) || "ask").split("/");
+  const v = ["ask", "data", "benchmark"].includes(view) ? view : "ask";
+  document.querySelectorAll("nav.tabs a").forEach(a => a.classList.toggle("on", a.dataset.view === v));
+  ["ask", "data", "benchmark"].forEach(n => $(`#view-${n}`).hidden = n !== v);
+  if (!state.meta) return;
+  if (v === "data") showData(rest);
+  if (v === "benchmark") showBenchmark();
+}
+window.addEventListener("hashchange", show);
+
+async function init() {
+  try { state.meta = await api("/meta"); }
+  catch (e) {
+    $("#status").innerHTML = '<span class="dot bad"></span> Server not ready';
+    $("#result").innerHTML = `<div class="error">Could not load the assistant: ${esc(e.message)}</div>`;
+    show(); return;
+  }
+  const m = state.meta, sep = '<span style="color:var(--faint)">|</span>';
+  $("#status").innerHTML = `<span class="dot ok"></span> Postgres: ${m.tables} tables, ${indian(m.rows)} rows ${sep} ${m.documents} documents ${sep} ${m.llm === "openai" ? "OpenAI" : "Offline mode"}`;
+  $("#mode").innerHTML = m.modes.map(x => `<option value="${x}" ${x === "hybrid_rerank" ? "selected" : ""}>${MODE_NAMES[x] || x}</option>`).join("");
+  $("#strategy").innerHTML = m.strategies.map(x => `<option value="${x}" ${x === m.default_strategy ? "selected" : ""}>${x[0].toUpperCase() + x.slice(1)}</option>`).join("");
+  $("#bq-count").textContent = m.questions;
+  const chips = list => list.map(q => `<button class="chip" type="button" data-q="${esc(q)}">${esc(q)}</button>`).join("");
+  $("#ex-sql").innerHTML = chips(m.examples.sql);
+  $("#ex-docs").innerHTML = chips(m.examples.docs);
+  show();
+  const q = new URLSearchParams(location.search).get("q");  // shareable links: /?q=...
+  if (q) { if (new URLSearchParams(location.search).get("trace")) $("#trace").checked = true; askThis(q); }
+}
+function askThis(q) { $("#q").value = q; if (!["", "#ask"].includes(location.hash)) location.hash = "ask"; ask(); }
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-q]");
+  if (el) askThis(el.dataset.q);
+});
+$("#route-seg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.route = b.dataset.v;
+  $("#route-seg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+});
+
+/* ---------- ask ---------- */
+$("#ask-form").addEventListener("submit", e => { e.preventDefault(); ask(); });
+async function ask() {
+  const question = $("#q").value.trim();
+  if (question.length < 3) { $("#q").focus(); return; }
+  const btn = $("#ask-btn"); btn.disabled = true;
+  $("#result").innerHTML = `<div class="card pad row"><span class="spinner"></span><span class="muted">Working on it…</span></div>`;
+  try {
+    const r = await post("/ask", { question, route: state.route, mode: $("#mode").value, strategy: $("#strategy").value,
+                                   k: +$("#k").value, trace: $("#trace").checked });
+    $("#result").innerHTML = renderReply(r);
+    $("#result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (e) {
+    $("#result").innerHTML = `<div class="error">${esc(e.message)}</div>`;
+  } finally { btn.disabled = false; }
+}
+function renderReply(r) {
+  const isSql = r.route.target === "sql" && !!r.sql;
+  const path = isSql ? `<span class="badge sql">${ICON_DB} Answered with SQL</span>` : `<span class="badge docs">${ICON_DOC} Answered from documents</span>`;
+  const flow = isSql
+    ? ["Router", `SQL writer (${r.sql_writer})`, "Safety check", "Postgres, read-only", "Answer"]
+    : ["Router", MODE_NAMES[r.mode] || r.mode, `Top ${r.sources.length} chunks`, `Answer (${r.generator})`];
+  let check = "";
+  if (r.check) {
+    const c = r.check, good = c.route_ok && c.correct;
+    const word = !c.route_ok ? "wrong path" : c.correct ? "correct" : c.retrieved ? "answer is in the sources" : "incorrect";
+    check = `<span class="badge ${good ? "ok" : c.retrieved ? "plain" : "bad"}" title="This is one of the benchmark questions">Benchmark ${esc(c.id)}: ${word}</span>`;
+  }
+  const notes = (r.notes || []).map(n => `<div class="note">${esc(n)}</div>`).join("");
+  const timings = Object.entries(r.timings_ms || {}).map(([k, v]) => `${k.replace(/_/g, " ")} ${v} ms`).join(" · ");
+  let body = "";
+  if (isSql) {
+    if (r.error) body += `<div class="error">${esc(r.error)}</div>`;
+    if (r.columns.length) body += `<div><div class="label" style="margin-bottom:8px">Result: ${r.rows.length} row${r.rows.length === 1 ? "" : "s"}</div>${dataTable(r.columns, r.rows)}</div>`;
+    body += `<details ${r.error ? "open" : ""}><summary>SQL query</summary>
+      ${r.sql_explanation ? `<p class="small muted" style="margin-top:8px">${esc(r.sql_explanation)}</p>` : ""}
+      <pre class="sql">${highlightSql(r.sql)}</pre></details>`;
+  } else {
+    const key = r.check && r.check.key;
+    body += `<div><div class="label" style="margin-bottom:8px">Sources</div>${r.sources.map(s => `
+      <div class="source"><div class="head"><b>${esc(s.title)}</b><span class="muted">› ${esc(s.section || s.chunk_id)}</span>
+        <span class="grow"></span>${s.relevant ? '<span class="badge ok">has the answer</span>' : ""}<span class="timings">score ${s.score}</span></div>
+        <div class="text">${highlight(s.section ? s.text.replace(/^.*\n/, "") : s.text, r.question, key)}</div>
+        <div style="margin-top:6px"><a class="small" href="#data/doc/${encodeURIComponent(s.doc_id)}">Open document</a></div></div>`).join("")}</div>`;
+    if (r.trace) {
+      const used = new Set(r.sources.map(s => s.chunk_id));
+      body += `<details open><summary>Search steps</summary><p class="small muted" style="margin-top:6px">Top 8 chunks at each step. Outlined chunks are the ones used for the answer.</p><div class="trace">${STAGES.map(([k, t, d]) => `
+        <div class="col"><h4>${t}</h4><p>${d}</p>${(r.trace[k] || []).slice(0, 8).map(s => `<div class="item ${used.has(s.chunk_id) ? "used" : ""}" title="${esc(s.title)} › ${esc(s.section)}">${s.rank}. ${esc(s.section || s.chunk_id)}</div>`).join("")}</div>`).join("")}</div></details>`;
+    }
+  }
+  return `<div class="card pad stack">
+    <div class="row">${path}${check}</div>
+    <div class="answer">${esc(r.answer)}</div>
+    <div class="reason">${esc(r.route.reason)}</div>
+    ${notes}${body}
+    <div class="row" style="justify-content:space-between"><div class="flow">${flow.map(s => `<span class="step">${esc(s)}</span>`).join('<span class="arrow">→</span>')}</div>
+      <div class="timings">${esc(timings)}</div></div>
+  </div>`;
+}
+
+/* ---------- data ---------- */
+async function showData([kind, ...idParts]) {
+  const id = decodeURIComponent(idParts.join("/"));
+  if (!state.tables) {
+    $("#data-main").innerHTML = spinner();
+    try { [state.tables, state.docs] = await Promise.all([api("/data/tables"), api("/data/docs")]); }
+    catch (e) { $("#data-main").innerHTML = `<div class="error">${esc(e.message)}</div>`; return; }
+  }
+  const T = state.tables.tables, D = state.docs.documents;
+  const link = (href, label, extra, on) => `<a href="#data${href}" class="${on ? "on" : ""}"><span>${esc(label)}</span><span>${extra}</span></a>`;
+  $("#data-nav").innerHTML = link("", "Overview", "", !kind)
+    + `<div class="group">Tables (SQL)</div>` + T.map(t => link(`/table/${t.name}`, t.name, indian(t.rows), kind === "table" && id === t.name)).join("")
+    + `<div class="group">Documents (search)</div>` + D.map(d => link(`/doc/${encodeURIComponent(d.doc_id)}`, d.title, "", kind === "doc" && id === d.doc_id)).join("");
+  if (kind === "table") return showTable(id, 0);
+  if (kind === "doc") return showDoc(id, state.meta.default_strategy);
+  const rows = T.reduce((a, t) => a + t.rows, 0);
+  const policies = D.filter(d => d.category === "policy").length;
+  $("#data-main").innerHTML = `<div class="stack">
+    <div><h1 class="page">The data</h1>
+      <p class="lede">Frostfield Creamery is a fictional Indian ice cream maker with 18 products, 4 plants, 12 distributors and two years of sales (January 2024 to December 2025). All of it lives in one Postgres database: ${T.length} tables, ${indian(rows)} rows.</p></div>
+    <div class="card pad"><h2 class="sec">How a question reaches the data</h2>
+      <div class="diagram">
+        <div class="box"><b>Postgres</b>${T.length} tables. The single source of truth.</div>
+        <div class="arrow">→</div>
+        <div class="split">
+          <div class="box"><b><span class="badge sql">SQL</span></b>Numbers (sales, production, counts) are queried live, read-only.</div>
+          <div class="box"><b><span class="badge docs">Documents</span></b>${policies} policies plus product, supplier, promotion and incident records, exported as ${D.length} markdown documents and searched.</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="box"><b>Answer</b>Shown with the query or the source passages it came from.</div>
+      </div></div>
+    <div><h2 class="sec">Tables</h2><div class="tcards">${T.map(t => `<a class="tcard" style="text-decoration:none" href="#data/table/${t.name}"><span class="rows">${indian(t.rows)} rows</span><b>${esc(t.name)}</b><p>${esc(t.description)}</p></a>`).join("")}</div></div>
+    <div><h2 class="sec">Documents</h2><div class="tcards">${D.map(d => `<a class="tcard" style="text-decoration:none" href="#data/doc/${encodeURIComponent(d.doc_id)}"><span class="rows">${d.sections} sections</span><b class="title">${esc(d.title)}</b><p>From the ${esc(d.source)}</p></a>`).join("")}</div></div>
+    <details class="card pad"><summary>How the tables connect (${state.tables.relationships.length} links)</summary>
+      <div class="table-wrap" style="margin-top:12px"><table class="data"><thead><tr><th>Column</th><th>Points to</th></tr></thead><tbody>
+      ${state.tables.relationships.map(r => `<tr><td class="mono">${esc(r.from)}</td><td class="mono">${esc(r.to)}</td></tr>`).join("")}</tbody></table></div></details>
+  </div>`;
+}
+async function showTable(name, offset) {
+  const t = state.tables.tables.find(x => x.name === name);
+  if (!t) { $("#data-main").innerHTML = `<div class="error">No table called ${esc(name)}.</div>`; return; }
+  const limit = 25;
+  let r;
+  try { r = await api(`/data/tables/${encodeURIComponent(name)}?limit=${limit}&offset=${offset}`); }
+  catch (e) { $("#data-main").innerHTML = `<div class="error">${esc(e.message)}</div>`; return; }
+  $("#data-main").innerHTML = `<div class="stack">
+    <div><div class="label">Table</div><h1 class="page mono" style="font-size:22px">${esc(name)}</h1><p class="lede">${esc(t.description)} <span class="muted">${indian(t.rows)} rows.</span></p></div>
+    <div class="card pad"><h2 class="sec">Columns</h2>
+      <div class="table-wrap"><table class="data"><thead><tr><th>Name</th><th>Type</th><th>Meaning</th></tr></thead><tbody>
+      ${t.columns.map(c => `<tr><td class="mono">${esc(c.name)}${c.primary_key ? ' <span class="badge plain">key</span>' : ""}</td><td class="mono muted">${esc(c.type)}</td>
+        <td>${esc(c.description)}${c.references ? ` <a class="small" href="#data/table/${c.references.split(".")[0]}">links to ${esc(c.references)}</a>` : ""}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="card pad"><div class="row" style="margin-bottom:10px"><h2 class="sec grow" style="margin:0">Rows</h2><span class="small muted">${indian(offset + 1)} to ${indian(Math.min(offset + limit, t.rows))} of ${indian(t.rows)}</span></div>
+      ${dataTable(r.columns, r.rows)}
+      <div class="pager"><button id="prev" ${offset === 0 ? "disabled" : ""}>Previous</button><button id="next" ${offset + limit >= t.rows ? "disabled" : ""}>Next</button></div></div>
+  </div>`;
+  $("#prev").onclick = () => showTable(name, Math.max(0, offset - limit));
+  $("#next").onclick = () => showTable(name, offset + limit);
+}
+async function showDoc(id, strategy) {
+  let d;
+  try { d = await api(`/data/docs/${encodeURIComponent(id)}?strategy=${strategy}`); }
+  catch (e) { $("#data-main").innerHTML = `<div class="error">${esc(e.message)}</div>`; return; }
+  const view = state.docView;
+  $("#data-main").innerHTML = `<div class="stack">
+    <div class="row"><div class="grow"><div class="label">Document, from the ${esc(d.source)}</div></div>
+      <div class="seg" id="doc-seg"><button data-v="read" class="${view === "read" ? "on" : ""}">Read</button><button data-v="chunks" class="${view === "chunks" ? "on" : ""}">How search splits it</button></div></div>
+    ${d.questions.length ? `<div class="card pad"><div class="label">Benchmark questions this document answers</div>${d.questions.map(q => `<button class="pill-q" data-q="${esc(q.question)}" title="Ask this">${esc(q.question)}</button>`).join("")}</div>` : ""}
+    <div class="card pad">${view === "read" ? `<div class="md">${md(d.text)}</div>` : `
+      <div class="row" style="margin-bottom:12px"><span class="small muted grow">${d.chunks.length} chunks. Search returns chunks, not whole documents.</span>
+        <select id="doc-strategy" aria-label="Chunking">${state.meta.strategies.map(s => `<option ${s === strategy ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+      ${d.chunks.map(c => `<div class="chunk"><div class="meta">${esc(c.chunk_id)} · ${c.tokens} words</div>${esc(c.text)}</div>`).join("")}`}</div>
+  </div>`;
+  $("#doc-seg").onclick = e => { const b = e.target.closest("button"); if (b) { state.docView = b.dataset.v; showDoc(id, strategy); } };
+  const sel = $("#doc-strategy"); if (sel) sel.onchange = () => showDoc(id, sel.value);
+}
+
+/* ---------- benchmark ---------- */
+async function showBenchmark() {
+  let R;
+  try { R = await api("/eval/results"); }
+  catch (e) {
+    $("#bench").innerHTML = `<div class="card empty">${e.status === 404 ? "No results yet. Click <b>Run benchmark</b>." : esc(e.message)}</div>`;
+    return;
+  }
+  const s = R.summary, m = R.meta, d = s.retrieval.default, b = s.retrieval.best;
+  const card = (title, value, n, total, text) => `<div class="card score"><div class="label">${title}</div>
+    <div class="big">${pct(value)}${n !== null ? `<small>${n} of ${total}</small>` : ""}</div><p>${text}</p><div class="bar"><i style="width:${(value || 0) * 100}%"></i></div></div>`;
+  const wrong = i => !i.route_ok || i.sql_ok === false || i.retrieved === false;
+  const items = R.questions.filter(i => state.benchFilter === "all" || wrong(i));
+  const docsHit = R.questions.filter(i => i.expected_route === "docs");
+  const rows = items.map(i => {
+    const kind = i.expected_route === "sql" ? '<span class="badge sql">SQL</span>' : '<span class="badge docs">Docs</span>';
+    const ok = i.expected_route === "sql" ? i.sql_ok : i.retrieved;
+    return `<tr class="click" data-q="${esc(i.question)}" title="Ask this question">
+      <td class="mono muted">${esc(i.id)}</td><td>${esc(i.question)}${i.error ? `<div class="small muted">${esc(i.error)}</div>` : ""}</td><td>${kind}</td>
+      <td class="${i.route_ok ? "yes" : "no"}">${i.route_ok ? "✓" : "✗ went to " + esc(i.route)}</td><td class="${ok ? "yes" : "no"}">${ok ? "✓" : "✗"}</td></tr>`;
+  }).join("");
+  const grid = [...R.retrieval_grid].sort((a, c) => c.hit_rate - a.hit_rate || c.mrr - a.mrr);
+  $("#bench").innerHTML = `<div class="stack">
+    <div class="scores">
+      ${card("Picks the right path", s.routing.accuracy, s.routing.correct, s.routing.total, "Questions sent to SQL or to the documents correctly.")}
+      ${card("Number answers correct", s.sql.accuracy, s.sql.correct, s.sql.total, "Generated queries that returned the same result as the reference query.")}
+      ${card("Document answers found", d.hit_rate, docsHit.filter(i => i.retrieved).length, docsHit.length, `Document questions where a top-${m.k} search result contained the answer.`)}
+    </div>
+    <p class="small muted">Last run ${esc(new Date(m.created_at).toLocaleString())}. Router: ${esc(m.router)}, SQL writer: ${esc(m.sql_writer)}, embeddings: ${esc(m.embedder)}.</p>
+    <div class="card pad"><div class="row" style="margin-bottom:12px"><h2 class="sec grow" style="margin:0">Question by question</h2>
+      <div class="seg" id="bench-seg"><button data-v="all" class="${state.benchFilter === "all" ? "on" : ""}">All ${R.questions.length}</button><button data-v="wrong" class="${state.benchFilter === "wrong" ? "on" : ""}">Only wrong (${R.questions.filter(wrong).length})</button></div></div>
+      ${items.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>ID</th><th>Question</th><th>Type</th><th>Right path</th><th>Right answer</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">Nothing went wrong.</p>'}
+      <p class="small muted" style="margin-top:10px">Click a question to ask it. "Right answer" means the query matched the reference result (SQL), or a search result contained the answer (documents).</p></div>
+    <details class="card pad"><summary>Compare search setups for document questions</summary>
+      <p class="small muted" style="margin:10px 0">Each row is one way of splitting documents (chunking) combined with one way of searching. <b>Found</b>: answer in the top ${m.k} results. <b>Rank score</b> (MRR): 1.00 when the answer is always the first result, 0.50 when it is usually second. Best setup: ${esc(b.strategy)} + ${esc(MODE_NAMES[b.mode] || b.mode)}.</p>
+      <div class="table-wrap"><table class="data"><thead><tr><th>Chunking</th><th>Search mode</th><th class="n">Chunks</th><th class="n">Found</th><th class="n">Rank score</th><th class="n">Reply has answer</th></tr></thead><tbody>
+      ${grid.map(r => `<tr><td>${esc(r.strategy)}</td><td>${esc(MODE_NAMES[r.mode] || r.mode)}</td><td class="n">${r.chunks}</td><td class="n">${pct(r.hit_rate)}</td><td class="n">${r.mrr.toFixed(2)}</td><td class="n">${pct(r.answer_accuracy)}</td></tr>`).join("")}</tbody></table></div></details>
+  </div>`;
+  $("#bench-seg").onclick = e => { const bt = e.target.closest("button"); if (bt) { state.benchFilter = bt.dataset.v; showBenchmark(); } };
+}
+$("#run-btn").addEventListener("click", async () => {
+  try { await post("/eval/run", { k: 3, generation: true }); }
+  catch (e) { if (e.status !== 409) { $("#bench").insertAdjacentHTML("afterbegin", `<div class="error">${esc(e.message)}</div>`); return; } }
+  pollRun();
+});
+async function pollRun() {
+  const st = await api("/eval/status");
+  const btn = $("#run-btn"), box = $("#run-progress");
+  if (st.state === "running") {
+    btn.disabled = true;
+    const p = st.total ? st.done / st.total : 0;
+    box.innerHTML = `Running ${st.done} of ${st.total || "…"} <span class="progress"><i style="width:${p * 100}%"></i></span>`;
+    setTimeout(pollRun, 700); return;
+  }
+  btn.disabled = false; box.innerHTML = "";
+  if (st.state === "failed") $("#bench").insertAdjacentHTML("afterbegin", `<div class="error">Benchmark failed: ${esc(st.error)}</div>`);
+  else showBenchmark();
+}
+init();
+</script>
+</body>
+</html>

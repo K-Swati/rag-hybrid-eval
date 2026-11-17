@@ -1,0 +1,35 @@
+# docker compose up            -> Postgres + the app at http://localhost:8000
+# docker compose up -d postgres -> only Postgres, for running the app from your virtualenv
+#
+# Postgres loads db/init/*.sql (schema, seed data, read-only role) the first time it starts.
+# To reload the data after changing it: docker compose down -v && docker compose up
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: icecream
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres   # local development only
+    ports: ["127.0.0.1:5432:5432"]
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d icecream"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build: .
+    ports: ["127.0.0.1:8000:8000"]   # no auth: keep it on localhost or behind an auth proxy
+    environment:
+      DATABASE_URL: postgresql://rag_reader:rag_reader@postgres:5432/icecream
+      LLM: ${LLM:-offline}           # set LLM=openai and OPENAI_API_KEY in .env for model-written SQL and answers
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

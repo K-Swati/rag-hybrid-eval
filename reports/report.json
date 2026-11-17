@@ -1,0 +1,759 @@
+{
+  "meta": {
+    "created_at": "2026-11-12T10:16:57+00:00",
+    "k": 3,
+    "embedder": "hashing",
+    "generator": "extractive",
+    "router": "keywords",
+    "sql_writer": "rules",
+    "questions": 48,
+    "sql_questions": 20,
+    "docs_questions": 28,
+    "default_strategy": "heading",
+    "default_mode": "hybrid_rerank"
+  },
+  "summary": {
+    "routing": {
+      "correct": 48,
+      "total": 48,
+      "accuracy": 1.0
+    },
+    "sql": {
+      "correct": 18,
+      "total": 20,
+      "accuracy": 0.9
+    },
+    "retrieval": {
+      "default": {
+        "strategy": "heading",
+        "mode": "hybrid_rerank",
+        "chunks": 99,
+        "avg_tokens": 44.8,
+        "hit_rate": 1.0,
+        "precision": 0.369,
+        "mrr": 0.964,
+        "ndcg": 0.971,
+        "answer_accuracy": 0.75,
+        "groundedness": 1.0
+      },
+      "best": {
+        "strategy": "heading",
+        "mode": "dense",
+        "chunks": 99,
+        "avg_tokens": 44.8,
+        "hit_rate": 1.0,
+        "precision": 0.357,
+        "mrr": 0.976,
+        "ndcg": 0.982,
+        "answer_accuracy": 0.786,
+        "groundedness": 1.0
+      }
+    }
+  },
+  "questions": [
+    {
+      "id": "s01",
+      "question": "What was our total net revenue in 2025?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (total, revenue / sales, year), so it is computed with SQL.",
+      "sql": "SELECT ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025",
+      "sql_ok": true
+    },
+    {
+      "id": "s02",
+      "question": "Which region had the highest revenue in 2024?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (ranking, revenue / sales, year), so it is computed with SQL.",
+      "sql": "SELECT r.name AS region, ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nJOIN distributors d ON d.distributor_id = s.distributor_id\nJOIN regions r ON r.region_id = d.region_id\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2024\nGROUP BY region\nORDER BY net_revenue_inr DESC, region\nLIMIT 1",
+      "sql_ok": true
+    },
+    {
+      "id": "s03",
+      "question": "How many units of Mango Kulfi did we sell in the West region in 2024?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (how many, units sold, year), so it is computed with SQL.",
+      "sql": "SELECT SUM(s.units) AS units\nFROM sales s\nJOIN distributors d ON d.distributor_id = s.distributor_id\nJOIN regions r ON r.region_id = d.region_id\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2024\n  AND r.region_id = 'WEST'\n  AND s.sku = 'FF-KUL-MNG-60'",
+      "sql_ok": true
+    },
+    {
+      "id": "s04",
+      "question": "Top 5 products by units sold in 2025",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (top / bottom N, units sold, year), so it is computed with SQL.",
+      "sql": "SELECT p.name AS product, SUM(s.units) AS units\nFROM sales s\nJOIN products p ON p.sku = s.sku\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\nGROUP BY product\nORDER BY units DESC, product\nLIMIT 5",
+      "sql_ok": true
+    },
+    {
+      "id": "s05",
+      "question": "Show monthly revenue for 2025",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (revenue / sales, trend, year), so it is computed with SQL.",
+      "sql": "SELECT s.sale_month AS month, ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\nGROUP BY month\nORDER BY month",
+      "sql_ok": true
+    },
+    {
+      "id": "s06",
+      "question": "Revenue by channel in 2025",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (revenue / sales, breakdown, year), so it is computed with SQL.",
+      "sql": "SELECT s.channel AS channel, ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\nGROUP BY channel\nORDER BY net_revenue_inr DESC, channel",
+      "sql_ok": true
+    },
+    {
+      "id": "s07",
+      "question": "How much discount did we give on the Classic Vanilla Tub through quick commerce in 2025?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (how much, year), so it is computed with SQL.",
+      "sql": "SELECT ROUND(SUM(s.discount_inr), 2) AS discount_inr\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\n  AND s.sku = 'FF-TUB-VAN-500'\n  AND s.channel = 'quick_commerce'",
+      "sql_ok": true
+    },
+    {
+      "id": "s08",
+      "question": "Which product had the lowest net revenue in 2025?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (ranking, revenue / sales, year), so it is computed with SQL.",
+      "sql": "SELECT p.name AS product, ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nJOIN products p ON p.sku = s.sku\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\nGROUP BY product\nORDER BY net_revenue_inr ASC, product\nLIMIT 1",
+      "sql_ok": true
+    },
+    {
+      "id": "s09",
+      "question": "Compare total revenue in 2024 vs 2025",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (total, revenue / sales, comparison, year), so it is computed with SQL.",
+      "sql": "SELECT EXTRACT(YEAR FROM s.sale_month)::int AS year, ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nGROUP BY year\nORDER BY year",
+      "sql_ok": true
+    },
+    {
+      "id": "s10",
+      "question": "How many active products do we have?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (how many), so it is computed with SQL.",
+      "sql": "SELECT COUNT(*) AS products\nFROM products p\nWHERE p.status = 'active'",
+      "sql_ok": true
+    },
+    {
+      "id": "s11",
+      "question": "How many quality incidents were high severity?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (how many), so it is computed with SQL.",
+      "sql": "SELECT COUNT(*) AS incidents\nFROM quality_incidents q\nJOIN production_batches b ON b.batch_id = q.batch_id\nWHERE q.severity = 'high'",
+      "sql_ok": true
+    },
+    {
+      "id": "s12",
+      "question": "How many distributors are in the East region?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (how many), so it is computed with SQL.",
+      "sql": "SELECT COUNT(*) AS distributors\nFROM distributors d\nWHERE d.region_id = 'EAST'",
+      "sql_ok": true
+    },
+    {
+      "id": "s13",
+      "question": "What was the gross margin on Choco Bar in 2025?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (margin, year), so it is computed with SQL.",
+      "sql": "SELECT ROUND(SUM(s.net_revenue_inr - s.units * p.unit_cost_inr), 2) AS gross_margin_inr\nFROM sales s\nJOIN products p ON p.sku = s.sku\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\n  AND s.sku = 'FF-STK-CHO-70'",
+      "sql_ok": true
+    },
+    {
+      "id": "s14",
+      "question": "Net revenue by product category in Q2 2025",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (revenue / sales, breakdown, quarter, year), so it is computed with SQL.",
+      "sql": "SELECT p.category AS category, ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nJOIN products p ON p.sku = s.sku\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\n  AND EXTRACT(QUARTER FROM s.sale_month) = 2\nGROUP BY category\nORDER BY net_revenue_inr DESC, category",
+      "sql_ok": true
+    },
+    {
+      "id": "s15",
+      "question": "How many units did the Pune Plant produce in 2025?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (how many, units sold, year), so it is computed with SQL.",
+      "sql": "SELECT SUM(b.units) AS units_produced\nFROM production_batches b\nJOIN plants pl ON pl.plant_id = b.plant_id\nWHERE EXTRACT(YEAR FROM b.produced_on) = 2025\n  AND pl.plant_id = 'P02'",
+      "sql_ok": true
+    },
+    {
+      "id": "s16",
+      "question": "Which distributor had the highest revenue in 2025?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (ranking, revenue / sales, year), so it is computed with SQL.",
+      "sql": "SELECT d.name AS distributor, ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nJOIN distributors d ON d.distributor_id = s.distributor_id\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\nGROUP BY distributor\nORDER BY net_revenue_inr DESC, distributor\nLIMIT 1",
+      "sql_ok": true
+    },
+    {
+      "id": "s17",
+      "question": "How many units of kulfi were sold in May 2025?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (how many, units sold, year), so it is computed with SQL.",
+      "sql": "SELECT SUM(s.units) AS units\nFROM sales s\nJOIN products p ON p.sku = s.sku\nWHERE EXTRACT(YEAR FROM s.sale_month) = 2025\n  AND EXTRACT(MONTH FROM s.sale_month) = 5\n  AND p.category = 'kulfi'",
+      "sql_ok": true
+    },
+    {
+      "id": "s18",
+      "question": "Which distributor grew revenue the most from 2024 to 2025?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (ranking, revenue / sales, comparison, year), so it is computed with SQL.",
+      "sql": null,
+      "sql_ok": false,
+      "error": "the rules SQL writer does not handle this question"
+    },
+    {
+      "id": "s19",
+      "question": "What share of 2025 revenue came from quick commerce?",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (revenue / sales, comparison, year), so it is computed with SQL.",
+      "sql": null,
+      "sql_ok": false,
+      "error": "the rules SQL writer does not handle this question"
+    },
+    {
+      "id": "s20",
+      "question": "Revenue of Lemon Mint Sorbet by region",
+      "expected_route": "sql",
+      "route": "sql",
+      "route_ok": true,
+      "reason": "Asks for a number (revenue / sales, breakdown), so it is computed with SQL.",
+      "sql": "SELECT r.name AS region, ROUND(SUM(s.net_revenue_inr), 2) AS net_revenue_inr\nFROM sales s\nJOIN distributors d ON d.distributor_id = s.distributor_id\nJOIN regions r ON r.region_id = d.region_id\nWHERE s.sku = 'FF-SOR-LMN-100'\nGROUP BY region\nORDER BY net_revenue_inr DESC, region",
+      "sql_ok": true
+    },
+    {
+      "id": "d01",
+      "question": "What temperature must ice cream be stored at?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a rule, a policy term, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d02",
+      "question": "What happens if product warms above -12 °C for more than 30 minutes?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for how something is done, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d03",
+      "question": "How often do data loggers record the temperature?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for how something is done, a policy term, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d04",
+      "question": "How quickly must the recall committee be convened?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for how something is done, a rule, a policy term, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d05",
+      "question": "When must FSSAI be notified about a recall?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a rule, a policy term, a date or deadline, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d06",
+      "question": "How long do distributors have to claim for damaged stock?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for how something is done, a policy term, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d07",
+      "question": "Who must approve damage claims above ₹50,000?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a rule, who supplies or what it contains, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d08",
+      "question": "How many days of credit do general trade distributors get?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a time limit, a policy term, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d09",
+      "question": "When is a distributor put on credit hold?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a policy term, a date or deadline, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d10",
+      "question": "What trade discount can sales managers give without approval?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a rule, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d11",
+      "question": "Which promotions need CFO sign-off?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a rule, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d12",
+      "question": "What sensory panel score does a recipe need to move to pilot?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a rule, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d13",
+      "question": "What must happen on a line after running a nut product?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for how something is done, a rule, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d14",
+      "question": "What security deposit do new distributors pay?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a policy term, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d15",
+      "question": "Why can't tier C distributors stock tubs?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for an explanation, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d16",
+      "question": "Why was the Raspberry Sorbet discontinued?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for an explanation, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d17",
+      "question": "Who supplies our pistachio?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for who supplies or what it contains, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d18",
+      "question": "What caused the allergen incident with Lemon Mint Sorbet?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a cause or outcome, who supplies or what it contains, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d19",
+      "question": "What was the root cause of the plastic found in an Orange Bar?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a cause or outcome, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d20",
+      "question": "What is the MRP of the Pista Royale Cone?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a policy term, a fact lookup, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d21",
+      "question": "What was the mechanic of the Summer Cone Fest 2025 promotion?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a cause or outcome, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d22",
+      "question": "Which sweeteners are used in sugar-free products?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for who supplies or what it contains, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d23",
+      "question": "How long does distributor onboarding take?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for how something is done, a policy term, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d24",
+      "question": "What is the capacity of the Hosur Plant?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a policy term, a fact lookup, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d25",
+      "question": "Who is the sales head of the East region?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for who supplies or what it contains, a policy term, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d26",
+      "question": "What is the shelf life of our ice cream?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a policy term, a fact lookup, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d27",
+      "question": "What happened to Lucknow Ice Traders during the heatwave?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for how something is done, so the answer is looked up in the documents.",
+      "retrieved": true
+    },
+    {
+      "id": "d28",
+      "question": "When are national launches timed?",
+      "expected_route": "docs",
+      "route": "docs",
+      "route_ok": true,
+      "reason": "Looks for a date or deadline, so the answer is looked up in the documents.",
+      "retrieved": true
+    }
+  ],
+  "retrieval_grid": [
+    {
+      "strategy": "fixed",
+      "mode": "dense",
+      "chunks": 98,
+      "avg_tokens": 56.8,
+      "hit_rate": 0.929,
+      "precision": 0.405,
+      "mrr": 0.857,
+      "ndcg": 0.875,
+      "answer_accuracy": 0.286,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "fixed",
+      "mode": "bm25",
+      "chunks": 98,
+      "avg_tokens": 56.8,
+      "hit_rate": 0.857,
+      "precision": 0.393,
+      "mrr": 0.815,
+      "ndcg": 0.826,
+      "answer_accuracy": 0.286,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "fixed",
+      "mode": "hybrid",
+      "chunks": 98,
+      "avg_tokens": 56.8,
+      "hit_rate": 0.893,
+      "precision": 0.393,
+      "mrr": 0.827,
+      "ndcg": 0.844,
+      "answer_accuracy": 0.286,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "fixed",
+      "mode": "hybrid_rerank",
+      "chunks": 98,
+      "avg_tokens": 56.8,
+      "hit_rate": 0.929,
+      "precision": 0.405,
+      "mrr": 0.845,
+      "ndcg": 0.866,
+      "answer_accuracy": 0.286,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "recursive",
+      "mode": "dense",
+      "chunks": 72,
+      "avg_tokens": 59.8,
+      "hit_rate": 1.0,
+      "precision": 0.357,
+      "mrr": 0.905,
+      "ndcg": 0.927,
+      "answer_accuracy": 0.786,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "recursive",
+      "mode": "bm25",
+      "chunks": 72,
+      "avg_tokens": 59.8,
+      "hit_rate": 0.893,
+      "precision": 0.321,
+      "mrr": 0.875,
+      "ndcg": 0.877,
+      "answer_accuracy": 0.75,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "recursive",
+      "mode": "hybrid",
+      "chunks": 72,
+      "avg_tokens": 59.8,
+      "hit_rate": 0.964,
+      "precision": 0.357,
+      "mrr": 0.875,
+      "ndcg": 0.898,
+      "answer_accuracy": 0.75,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "recursive",
+      "mode": "hybrid_rerank",
+      "chunks": 72,
+      "avg_tokens": 59.8,
+      "hit_rate": 1.0,
+      "precision": 0.345,
+      "mrr": 0.887,
+      "ndcg": 0.916,
+      "answer_accuracy": 0.75,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "heading",
+      "mode": "dense",
+      "chunks": 99,
+      "avg_tokens": 44.8,
+      "hit_rate": 1.0,
+      "precision": 0.357,
+      "mrr": 0.976,
+      "ndcg": 0.982,
+      "answer_accuracy": 0.786,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "heading",
+      "mode": "bm25",
+      "chunks": 99,
+      "avg_tokens": 44.8,
+      "hit_rate": 0.929,
+      "precision": 0.345,
+      "mrr": 0.911,
+      "ndcg": 0.918,
+      "answer_accuracy": 0.75,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "heading",
+      "mode": "hybrid",
+      "chunks": 99,
+      "avg_tokens": 44.8,
+      "hit_rate": 1.0,
+      "precision": 0.369,
+      "mrr": 0.958,
+      "ndcg": 0.969,
+      "answer_accuracy": 0.75,
+      "groundedness": 1.0
+    },
+    {
+      "strategy": "heading",
+      "mode": "hybrid_rerank",
+      "chunks": 99,
+      "avg_tokens": 44.8,
+      "hit_rate": 1.0,
+      "precision": 0.369,
+      "mrr": 0.964,
+      "ndcg": 0.971,
+      "answer_accuracy": 0.75,
+      "groundedness": 1.0
+    }
+  ],
+  "misses": [
+    {
+      "strategy": "fixed",
+      "mode": "dense",
+      "id": "d09",
+      "question": "When is a distributor put on credit hold?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "dense",
+      "id": "d20",
+      "question": "What is the MRP of the Pista Royale Cone?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "bm25",
+      "id": "d05",
+      "question": "When must FSSAI be notified about a recall?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "bm25",
+      "id": "d17",
+      "question": "Who supplies our pistachio?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "bm25",
+      "id": "d20",
+      "question": "What is the MRP of the Pista Royale Cone?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "bm25",
+      "id": "d23",
+      "question": "How long does distributor onboarding take?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "hybrid",
+      "id": "d17",
+      "question": "Who supplies our pistachio?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "hybrid",
+      "id": "d20",
+      "question": "What is the MRP of the Pista Royale Cone?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "hybrid",
+      "id": "d23",
+      "question": "How long does distributor onboarding take?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "hybrid_rerank",
+      "id": "d17",
+      "question": "Who supplies our pistachio?"
+    },
+    {
+      "strategy": "fixed",
+      "mode": "hybrid_rerank",
+      "id": "d23",
+      "question": "How long does distributor onboarding take?"
+    },
+    {
+      "strategy": "recursive",
+      "mode": "bm25",
+      "id": "d05",
+      "question": "When must FSSAI be notified about a recall?"
+    },
+    {
+      "strategy": "recursive",
+      "mode": "bm25",
+      "id": "d17",
+      "question": "Who supplies our pistachio?"
+    },
+    {
+      "strategy": "recursive",
+      "mode": "bm25",
+      "id": "d20",
+      "question": "What is the MRP of the Pista Royale Cone?"
+    },
+    {
+      "strategy": "recursive",
+      "mode": "hybrid",
+      "id": "d20",
+      "question": "What is the MRP of the Pista Royale Cone?"
+    },
+    {
+      "strategy": "heading",
+      "mode": "bm25",
+      "id": "d05",
+      "question": "When must FSSAI be notified about a recall?"
+    },
+    {
+      "strategy": "heading",
+      "mode": "bm25",
+      "id": "d20",
+      "question": "What is the MRP of the Pista Royale Cone?"
+    }
+  ]
+}
